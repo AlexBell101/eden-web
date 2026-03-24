@@ -5,12 +5,13 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { Home, SlidersHorizontal, Clock, Settings, LogOut, Menu, X } from 'lucide-react'
+import { Home, SlidersHorizontal, Clock, Settings, LogOut, Menu, X, Users } from 'lucide-react'
 import { useState } from 'react'
 
 const navLinks = [
   { href: '/feed', label: 'Feed', icon: Home },
   { href: '/criteria', label: 'Criteria', icon: SlidersHorizontal },
+  { href: '/household', label: 'Together', icon: Users },
   { href: '/history', label: 'History', icon: Clock },
   { href: '/settings', label: 'Settings', icon: Settings },
 ]

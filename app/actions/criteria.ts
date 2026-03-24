@@ -29,8 +29,12 @@ export async function saveCriteria(criteria: CriterionInput[]) {
 
   const normalized = normalizeWeights(criteria)
 
+  // Only include id for real UUIDs — temp_* ids are client-side placeholders
+  // that Postgres would reject. Omitting id lets Supabase generate a new UUID.
+  const isRealId = (id?: string) => !!id && !id.startsWith('temp_')
+
   const rows = normalized.map((c) => ({
-    ...(c.id ? { id: c.id } : {}),
+    ...(isRealId(c.id) ? { id: c.id } : {}),
     user_id: user.id,
     name: c.name,
     description: c.description,

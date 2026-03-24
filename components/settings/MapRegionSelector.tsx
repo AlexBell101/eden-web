@@ -62,6 +62,7 @@ export function MapRegionSelector({ value, onChange }: MapRegionSelectorProps) {
     const map = mapRef.current?.getMap()
     if (!map) return
     const bounds = map.getBounds()
+    if (!bounds) return
     const label = query || value?.label || 'Custom area'
     onChange({
       sw_lat: bounds.getSouth(),

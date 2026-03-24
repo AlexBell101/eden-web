@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { ListingCard, type Listing } from '@/components/feed/ListingCard'
 import { Search } from 'lucide-react'
 
-async function getListingsWithScores(userId: string): Promise<Listing[]> {
+async function getListingsWithScores(userId: string, threshold: number): Promise<Listing[]> {
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -22,7 +22,7 @@ async function getListingsWithScores(userId: string): Promise<Listing[]> {
       )
     `)
     .eq('user_id', userId)
-    .eq('above_threshold', true)
+    .gte('overall_score', threshold)
     .order('overall_score', { ascending: false })
 
   if (error || !data) return []
@@ -62,7 +62,14 @@ export default async function FeedPage() {
   // user is guaranteed by the dashboard layout, but satisfy TypeScript
   if (!user) return null
 
-  const listings = await getListingsWithScores(user.id)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('score_threshold')
+    .eq('id', user.id)
+    .single()
+
+  const threshold = profile?.score_threshold ?? 7.0
+  const listings = await getListingsWithScores(user.id, threshold)
 
   return (
     <div className="space-y-6">

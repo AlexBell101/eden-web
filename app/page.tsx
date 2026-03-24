@@ -3,10 +3,7 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { ArrowRight } from 'lucide-react'
 
-// ─── Swap this URL once you have the DALL-E / custom image ───────────────────
-// Drop your image in /public/hero.jpg and change to: HERO_IMAGE = '/hero.jpg'
-const HERO_IMAGE =
-  'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&q=85&auto=format&fit=crop'
+const HERO_IMAGE = '/architectural.png'
 
 export default async function LandingPage() {
   const supabase = await createClient()
@@ -28,10 +25,12 @@ export default async function LandingPage() {
             className="object-cover object-center"
             sizes="100vw"
           />
-          {/* Cinematic overlay: dark at top (nav) → more transparent mid → dark fade to obsidian bottom */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0D0F12]/80 via-[#0D0F12]/40 to-[#0D0F12]" />
-          {/* Subtle vignette on sides */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,#0D0F12/60_100%)]" />
+          {/* Top-to-bottom cinematic fade */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0D0F12]/85 via-[#0D0F12]/35 to-[#0D0F12]" />
+          {/* Left vignette — text legibility */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0D0F12]/60 via-transparent to-transparent" />
+          {/* Radial vignette for depth */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_60%_50%,transparent_40%,#0D0F12/50_100%)]" />
         </div>
 
         {/* Nav — floats over image */}

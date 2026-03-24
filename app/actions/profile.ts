@@ -13,6 +13,7 @@ export interface ProfileData {
   notification_preference: string | null
   notification_time: string | null
   target_city: string | null
+  search_bounds: object | null
 }
 
 export async function updateProfile(data: ProfileData) {

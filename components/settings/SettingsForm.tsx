@@ -6,7 +6,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { updateProfile } from '@/app/actions/profile'
+import { MapRegionSelector } from '@/components/settings/MapRegionSelector'
 import { cn } from '@/lib/utils'
+
+interface SearchBounds {
+  sw_lat: number
+  sw_lng: number
+  ne_lat: number
+  ne_lng: number
+  label: string
+}
 
 interface Profile {
   id: string
@@ -19,6 +28,7 @@ interface Profile {
   notification_preference: string | null
   notification_time: string | null
   target_city: string | null
+  search_bounds: SearchBounds | null
 }
 
 interface SettingsFormProps {
@@ -55,6 +65,9 @@ export function SettingsForm({ profile }: SettingsFormProps) {
     profile?.notification_time ?? '08:00'
   )
   const [targetCity, setTargetCity] = useState(profile?.target_city ?? '')
+  const [searchBounds, setSearchBounds] = useState<SearchBounds | null>(
+    profile?.search_bounds ?? null
+  )
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -71,7 +84,8 @@ export function SettingsForm({ profile }: SettingsFormProps) {
         notification_preference: notificationPreference,
         notification_time:
           notificationPreference === 'email' ? notificationTime || null : null,
-        target_city: targetCity || null,
+        target_city: searchBounds?.label ?? targetCity ?? null,
+        search_bounds: searchBounds ?? null,
       })
       setSaved(true)
     })
@@ -224,14 +238,17 @@ export function SettingsForm({ profile }: SettingsFormProps) {
         )}
       </FieldGroup>
 
-      {/* Target city */}
-      <FieldGroup label="Target city" htmlFor="target-city">
-        <Input
-          id="target-city"
-          type="text"
-          value={targetCity}
-          onChange={(e) => setTargetCity(e.target.value)}
-          placeholder="e.g. San Francisco, New York"
+      {/* Search area */}
+      <FieldGroup label="Search area">
+        <p className="text-xs text-muted-foreground mb-2">
+          Search for a neighborhood or city, then zoom to your ideal area and click "Use this area".
+        </p>
+        <MapRegionSelector
+          value={searchBounds}
+          onChange={(bounds) => {
+            setSearchBounds(bounds)
+            setTargetCity(bounds.label)
+          }}
         />
       </FieldGroup>
 

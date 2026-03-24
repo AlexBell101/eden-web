@@ -30,15 +30,23 @@ async function getListingsWithScores(userId: string): Promise<Listing[]> {
   return data
     .filter((s) => s.listings)
     .map((s) => {
-      const l = s.listings as Record<string, unknown>
+      const l = s.listings as unknown as {
+        id: string
+        address: string
+        neighborhood: string | null
+        rent: number
+        bedrooms: number
+        bathrooms: number
+        images: string[]
+      }
       return {
-        id: l.id as string,
-        address: (l.address as string) ?? 'Address unknown',
-        neighborhood: (l.neighborhood as string) ?? '',
-        rent: l.rent as number,
-        bedrooms: l.bedrooms as number,
-        bathrooms: l.bathrooms as number,
-        images: (l.images as string[]) ?? [],
+        id: l.id,
+        address: l.address ?? 'Address unknown',
+        neighborhood: l.neighborhood ?? '',
+        rent: l.rent,
+        bedrooms: l.bedrooms,
+        bathrooms: l.bathrooms,
+        images: l.images ?? [],
         overall_score: s.overall_score,
         claude_reasoning: s.claude_reasoning ?? '',
       }

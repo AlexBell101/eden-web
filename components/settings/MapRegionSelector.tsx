@@ -17,9 +17,17 @@ interface MapRegionSelectorProps {
   onChange: (bounds: Bounds) => void
 }
 
-const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? ''
 
 export function MapRegionSelector({ value, onChange }: MapRegionSelectorProps) {
+  if (!MAPBOX_TOKEN) {
+    return (
+      <div className="rounded-2xl border border-dashed border-border bg-muted/30 px-6 py-10 text-center text-sm text-muted-foreground">
+        Map unavailable — <code className="font-mono text-xs">NEXT_PUBLIC_MAPBOX_TOKEN</code> is not configured.
+      </div>
+    )
+  }
+
   const mapRef = useRef<MapRef>(null)
   const [query, setQuery] = useState('')
   const [suggestions, setSuggestions] = useState<Array<{ id: string; place_name: string; center: [number, number] }>>([])

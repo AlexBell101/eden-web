@@ -47,9 +47,13 @@ export default async function CriteriaPage() {
   const { criteria, vibeText } = await getCriteriaAndVibe(user.id)
   let finalCriteria = criteria
   if (criteria.length === 0) {
-    await seedDefaultCriteria()
-    const { criteria: seeded } = await getCriteriaAndVibe(user.id)
-    finalCriteria = seeded
+    try {
+      await seedDefaultCriteria()
+      const { criteria: seeded } = await getCriteriaAndVibe(user.id)
+      finalCriteria = seeded
+    } catch {
+      // Seeding failed (e.g. schema migration pending) — show empty state gracefully
+    }
   }
 
   return (

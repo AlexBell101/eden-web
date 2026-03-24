@@ -34,6 +34,21 @@ export function ListingCard({ listing }: ListingCardProps) {
       href={`/listing/${listing.id}`}
       className="block rounded-2xl border border-border bg-card shadow-sm overflow-hidden transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
+      {/* Photo */}
+      {listing.images && listing.images.length > 0 ? (
+        <div className="h-44 w-full overflow-hidden bg-muted">
+          <img
+            src={listing.images[0]}
+            alt={listing.address}
+            className="h-full w-full object-cover"
+          />
+        </div>
+      ) : (
+        <div className="h-44 w-full bg-muted flex items-center justify-center">
+          <span className="text-3xl">🏠</span>
+        </div>
+      )}
+
       <div className="p-5 space-y-4">
         {/* Header row */}
         <div className="flex items-start justify-between gap-3">

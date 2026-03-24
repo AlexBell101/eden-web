@@ -14,6 +14,7 @@ export interface ProfileData {
   notification_time: string | null
   target_city: string | null
   search_bounds: object | null
+  listing_type: string
 }
 
 export async function updateProfile(data: ProfileData) {

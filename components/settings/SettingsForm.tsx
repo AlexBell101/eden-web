@@ -68,6 +68,7 @@ export function SettingsForm({ profile }: SettingsFormProps) {
   const [searchBounds, setSearchBounds] = useState<SearchBounds | null>(
     profile?.search_bounds ?? null
   )
+  const [listingType, setListingType] = useState(profile?.listing_type ?? 'for_rent')
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -86,6 +87,7 @@ export function SettingsForm({ profile }: SettingsFormProps) {
           notificationPreference === 'email' ? notificationTime || null : null,
         target_city: searchBounds?.label ?? targetCity ?? null,
         search_bounds: searchBounds ?? null,
+        listing_type: listingType,
       })
       setSaved(true)
     })
@@ -236,6 +238,30 @@ export function SettingsForm({ profile }: SettingsFormProps) {
             />
           </div>
         )}
+      </FieldGroup>
+
+      {/* Listing type */}
+      <FieldGroup label="I'm looking to">
+        <div className="flex gap-2">
+          {[
+            { value: 'for_rent', label: '🏠 Rent' },
+            { value: 'for_sale', label: '🔑 Buy' },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setListingType(opt.value)}
+              className={cn(
+                'rounded-lg border px-5 py-2 text-sm font-medium transition-colors',
+                listingType === opt.value
+                  ? 'border-foreground bg-foreground text-background'
+                  : 'border-border bg-background text-muted-foreground hover:border-foreground/50 hover:text-foreground'
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </FieldGroup>
 
       {/* Search area */}

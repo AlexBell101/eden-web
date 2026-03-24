@@ -29,6 +29,7 @@ interface Profile {
   notification_time: string | null
   target_city: string | null
   search_bounds: SearchBounds | null
+  listing_type: string | null
 }
 
 interface SettingsFormProps {

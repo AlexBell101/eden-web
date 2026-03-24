@@ -1,53 +1,118 @@
 'use client'
 
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
-  const router = useRouter()
   const supabase = createClient()
 
   async function signInWithGoogle() {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: `${siteUrl}/callback`,
-      },
+      options: { redirectTo: `${siteUrl}/callback` },
     })
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="w-full max-w-sm space-y-8 px-4">
-        {/* Logo / wordmark */}
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-semibold tracking-tight">eden</h1>
-          <p className="text-muted-foreground text-sm">Stop searching. Let Eden find you.</p>
+    <div className="min-h-screen bg-[#0D0F12] text-[#F5F1EA] flex flex-col lg:flex-row">
+
+      {/* ── Left: brand panel ─────────────────────────────────────── */}
+      <div className="hidden lg:flex flex-col justify-between w-1/2 px-16 py-14 bg-[#0D0F12] border-r border-white/[0.06]">
+        {/* Logo */}
+        <Link href="/" className="text-xl font-semibold tracking-tight text-[#F5F1EA]">
+          eden
+        </Link>
+
+        {/* Main brand copy */}
+        <div className="space-y-6 max-w-md">
+          <h1
+            className="text-4xl xl:text-5xl leading-[1.1] text-[#F5F1EA]"
+            style={{ fontFamily: 'var(--font-serif)' }}
+          >
+            Find a home that fits your life, not just your filters.
+          </h1>
+          <p className="text-[#B7B0A3] text-base leading-relaxed">
+            Describe what matters — in your own words. Eden scores every listing against your
+            criteria so only the homes worth your attention make the cut.
+          </p>
+
+          {/* Sample quote */}
+          <div className="rounded-xl border border-white/[0.07] bg-[#151922] px-5 py-4 space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#7FA36C]">
+              Eden&apos;s Take
+            </p>
+            <p className="text-sm text-[#F5F1EA] italic leading-relaxed">
+              &ldquo;Quiet street, strong natural light, and enough nearby to feel easy. This one fits the way you want to live.&rdquo;
+            </p>
+          </div>
         </div>
 
-        {/* Sign in card */}
-        <div className="bg-card border rounded-2xl p-8 space-y-6 shadow-sm">
-          <div className="space-y-1">
-            <h2 className="text-lg font-medium">Welcome</h2>
-            <p className="text-sm text-muted-foreground">
+        {/* Footer quote */}
+        <p className="text-xs text-[#666B75]">
+          A calmer way to rent.
+        </p>
+      </div>
+
+      {/* ── Right: sign-in panel ──────────────────────────────────── */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-16">
+
+        {/* Mobile logo */}
+        <div className="lg:hidden mb-10 text-center space-y-2">
+          <Link href="/" className="text-2xl font-semibold tracking-tight text-[#F5F1EA]">
+            eden
+          </Link>
+          <p className="text-sm text-[#B7B0A3]">Stop searching. Let Eden find you.</p>
+        </div>
+
+        <div className="w-full max-w-sm space-y-8">
+          <div className="space-y-1.5">
+            <h2
+              className="text-2xl font-semibold text-[#F5F1EA]"
+              style={{ fontFamily: 'var(--font-serif)' }}
+            >
+              Welcome
+            </h2>
+            <p className="text-sm text-[#B7B0A3]">
               Sign in to see listings curated for you.
             </p>
           </div>
 
-          <button
-            onClick={signInWithGoogle}
-            className="w-full flex items-center justify-center gap-3 bg-white text-gray-900 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium hover:bg-gray-50 transition-colors"
-          >
-            <GoogleIcon />
-            Continue with Google
-          </button>
-        </div>
+          {/* Sign-in card */}
+          <div className="rounded-2xl border border-white/[0.08] bg-[#151922] p-8 space-y-5">
+            <button
+              onClick={signInWithGoogle}
+              className="w-full flex items-center justify-center gap-3 bg-white text-gray-900 rounded-xl px-4 py-3.5 text-sm font-medium hover:bg-gray-50 transition-colors"
+            >
+              <GoogleIcon />
+              Continue with Google
+            </button>
 
-        <p className="text-center text-xs text-muted-foreground">
-          By signing in you agree to our terms and privacy policy.
-        </p>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-white/[0.06]" />
+              <span className="text-xs text-[#666B75]">free to use</span>
+              <div className="flex-1 h-px bg-white/[0.06]" />
+            </div>
+
+            <ul className="space-y-2">
+              {[
+                '🎯 Listings scored against your criteria',
+                '🏡 Eden Together for couples & roommates',
+                '📍 Map-based region search',
+              ].map((item) => (
+                <li key={item} className="text-xs text-[#B7B0A3] flex items-center gap-2">
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <p className="text-center text-xs text-[#666B75]">
+            By signing in you agree to our terms and privacy policy.
+          </p>
+        </div>
       </div>
+
     </div>
   )
 }

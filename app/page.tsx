@@ -1,29 +1,36 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 import { ArrowRight } from 'lucide-react'
 
 export default async function LandingPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (user) redirect('/feed')
 
   return (
     <main className="min-h-screen bg-[#0D0F12] text-[#F5F1EA] flex flex-col">
 
       {/* ── Nav ─────────────────────────────────────────────────────── */}
       <nav className="flex items-center justify-between px-6 py-5 max-w-6xl mx-auto w-full">
-        <span className="text-lg font-semibold tracking-tight text-[#F5F1EA]">eden</span>
-        <Link
-          href="/login"
-          className="text-sm font-medium text-[#B7B0A3] hover:text-[#F5F1EA] transition-colors"
-        >
-          Sign in
-        </Link>
+        <span className="text-lg font-semibold tracking-tight">eden</span>
+        {user ? (
+          <Link
+            href="/feed"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-[#7FA36C] hover:text-[#5E7A56] transition-colors"
+          >
+            Your feed <ArrowRight className="size-3.5" />
+          </Link>
+        ) : (
+          <Link
+            href="/login"
+            className="text-sm font-medium text-[#B7B0A3] hover:text-[#F5F1EA] transition-colors"
+          >
+            Sign in
+          </Link>
+        )}
       </nav>
 
       {/* ── Hero ────────────────────────────────────────────────────── */}
-      <section className="flex-1 flex flex-col items-center justify-center text-center px-6 pt-20 pb-24 max-w-4xl mx-auto">
+      <section className="flex flex-col items-center justify-center text-center px-6 pt-20 pb-24 max-w-4xl mx-auto">
         <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-[#B7B0A3] mb-10 tracking-wide">
           AI-guided home search · Powered by Claude
         </div>
@@ -43,24 +50,36 @@ export default async function LandingPage() {
         </p>
 
         <div className="flex flex-col sm:flex-row items-center gap-3">
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-2 rounded-xl bg-[#7FA36C] text-[#0D0F12] px-7 py-3.5 text-sm font-semibold hover:bg-[#5E7A56] transition-colors"
-          >
-            Find my fit
-            <ArrowRight className="size-4" />
-          </Link>
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-2 rounded-xl border border-[#8B6F8F]/40 bg-[#8B6F8F]/10 text-[#8B6F8F] px-7 py-3.5 text-sm font-semibold hover:bg-[#8B6F8F]/20 transition-colors"
-          >
-            Try Eden Together
-          </Link>
+          {user ? (
+            <Link
+              href="/feed"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#7FA36C] text-[#0D0F12] px-7 py-3.5 text-sm font-semibold hover:bg-[#5E7A56] transition-colors"
+            >
+              Open your feed
+              <ArrowRight className="size-4" />
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#7FA36C] text-[#0D0F12] px-7 py-3.5 text-sm font-semibold hover:bg-[#5E7A56] transition-colors"
+              >
+                Find my fit
+                <ArrowRight className="size-4" />
+              </Link>
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-2 rounded-xl border border-[#8B6F8F]/40 bg-[#8B6F8F]/10 text-[#8B6F8F] px-7 py-3.5 text-sm font-semibold hover:bg-[#8B6F8F]/20 transition-colors"
+              >
+                Try Eden Together
+              </Link>
+            </>
+          )}
         </div>
       </section>
 
       {/* ── How it works ────────────────────────────────────────────── */}
-      <section className="border-t border-white/8 bg-[#151922] px-6 py-20">
+      <section className="border-t border-white/[0.06] bg-[#151922] px-6 py-20">
         <div className="max-w-5xl mx-auto">
           <p className="text-center text-xs font-semibold uppercase tracking-widest text-[#B7B0A3] mb-14">
             How it works
@@ -80,7 +99,7 @@ export default async function LandingPage() {
               {
                 num: '03',
                 title: 'Only the right homes surface',
-                body: 'Set your minimum threshold. Browse a feed of listings that actually clear your bar — not everyone else\'s.',
+                body: "Set your minimum threshold. Browse a feed of listings that actually clear your bar — not everyone else's.",
               },
             ].map((step) => (
               <div key={step.num} className="space-y-3">
@@ -102,7 +121,6 @@ export default async function LandingPage() {
           Two ways to find home
         </p>
         <div className="grid gap-6 sm:grid-cols-2">
-          {/* Solo */}
           <div className="rounded-2xl border border-[#7FA36C]/25 bg-[#151922] p-8 space-y-4">
             <div className="flex items-center gap-3">
               <span className="size-8 rounded-full bg-[#7FA36C]/15 flex items-center justify-center text-base">🌿</span>
@@ -123,14 +141,13 @@ export default async function LandingPage() {
               ))}
             </ul>
             <Link
-              href="/login"
+              href={user ? '/feed' : '/login'}
               className="inline-flex items-center gap-1.5 mt-2 text-sm font-medium text-[#7FA36C] hover:text-[#5E7A56] transition-colors"
             >
-              Get started <ArrowRight className="size-3.5" />
+              {user ? 'Open feed' : 'Get started'} <ArrowRight className="size-3.5" />
             </Link>
           </div>
 
-          {/* Together */}
           <div className="rounded-2xl border border-[#8B6F8F]/30 bg-[#151922] p-8 space-y-4">
             <div className="flex items-center gap-3">
               <span className="size-8 rounded-full bg-[#8B6F8F]/15 flex items-center justify-center text-base">👫</span>
@@ -151,17 +168,17 @@ export default async function LandingPage() {
               ))}
             </ul>
             <Link
-              href="/login"
+              href={user ? '/household' : '/login'}
               className="inline-flex items-center gap-1.5 mt-2 text-sm font-medium text-[#8B6F8F] hover:text-[#6E566F] transition-colors"
             >
-              Start together <ArrowRight className="size-3.5" />
+              {user ? 'Open Together' : 'Start together'} <ArrowRight className="size-3.5" />
             </Link>
           </div>
         </div>
       </section>
 
       {/* ── Product proof ────────────────────────────────────────────── */}
-      <section className="border-t border-white/8 bg-[#151922] px-6 py-24">
+      <section className="border-t border-white/[0.06] bg-[#151922] px-6 py-24">
         <div className="max-w-3xl mx-auto space-y-12">
           <p
             className="text-3xl sm:text-4xl text-center text-[#F5F1EA]"
@@ -191,7 +208,10 @@ export default async function LandingPage() {
                 color: '#8B6F8F',
               },
             ].map((item) => (
-              <div key={item.label} className="rounded-xl border border-white/8 bg-[#1B2130] px-6 py-5 flex items-start gap-5">
+              <div
+                key={item.label}
+                className="rounded-xl border border-white/[0.06] bg-[#1B2130] px-6 py-5 flex items-start gap-5"
+              >
                 <div
                   className="shrink-0 mt-0.5 rounded-lg px-2.5 py-1 text-xs font-bold tabular-nums"
                   style={{ background: `${item.color}22`, color: item.color }}
@@ -208,7 +228,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── Philosophy block ─────────────────────────────────────────── */}
+      {/* ── Philosophy ───────────────────────────────────────────────── */}
       <section className="px-6 py-24 max-w-3xl mx-auto text-center space-y-10">
         <blockquote
           className="text-2xl sm:text-3xl text-[#F5F1EA] leading-snug"
@@ -216,8 +236,7 @@ export default async function LandingPage() {
         >
           Eden is built for people who know what they want, but don&apos;t want to spend their lives scrolling for it.
         </blockquote>
-
-        <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-[#B7B0A3]">
+        <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-[#B7B0A3]">
           {[
             { stat: 'Less', label: 'scrolling' },
             { stat: 'Clearer', label: 'tradeoffs' },
@@ -232,7 +251,7 @@ export default async function LandingPage() {
       </section>
 
       {/* ── Closing CTA ──────────────────────────────────────────────── */}
-      <section className="border-t border-white/8 bg-[#151922] px-6 py-20 text-center">
+      <section className="border-t border-white/[0.06] bg-[#151922] px-6 py-20 text-center">
         <div className="max-w-xl mx-auto space-y-6">
           <h2
             className="text-3xl sm:text-4xl text-[#F5F1EA]"
@@ -241,25 +260,35 @@ export default async function LandingPage() {
             Your next home should feel obvious sooner.
           </h2>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#7FA36C] text-[#0D0F12] px-7 py-3.5 text-sm font-semibold hover:bg-[#5E7A56] transition-colors"
-            >
-              Find my fit
-              <ArrowRight className="size-4" />
-            </Link>
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-2 rounded-xl border border-[#8B6F8F]/40 bg-[#8B6F8F]/10 text-[#8B6F8F] px-7 py-3.5 text-sm font-semibold hover:bg-[#8B6F8F]/20 transition-colors"
-            >
-              Start with Eden Together
-            </Link>
+            {user ? (
+              <Link
+                href="/feed"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#7FA36C] text-[#0D0F12] px-7 py-3.5 text-sm font-semibold hover:bg-[#5E7A56] transition-colors"
+              >
+                Back to your feed <ArrowRight className="size-4" />
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#7FA36C] text-[#0D0F12] px-7 py-3.5 text-sm font-semibold hover:bg-[#5E7A56] transition-colors"
+                >
+                  Find my fit <ArrowRight className="size-4" />
+                </Link>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[#8B6F8F]/40 bg-[#8B6F8F]/10 text-[#8B6F8F] px-7 py-3.5 text-sm font-semibold hover:bg-[#8B6F8F]/20 transition-colors"
+                >
+                  Start with Eden Together
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>
 
       {/* ── Footer ───────────────────────────────────────────────────── */}
-      <footer className="border-t border-white/8 px-6 py-8">
+      <footer className="border-t border-white/[0.06] px-6 py-8">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <span className="text-sm font-semibold text-[#B7B0A3]">eden</span>
           <span className="text-xs text-[#666B75]">A calmer way to rent.</span>

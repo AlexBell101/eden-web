@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronDown, ChevronUp, Bed, Bath, MapPin } from 'lucide-react'
+import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Bed, Bath, MapPin } from 'lucide-react'
 import { ScoreBadge } from '@/components/shared/ScoreBadge'
 import { cn } from '@/lib/utils'
 
@@ -29,6 +29,96 @@ function formatRent(rent: number): string {
   return `$${rent.toLocaleString()}/mo`
 }
 
+function PhotoCarousel({ images, address, isTogether }: {
+  images: string[]
+  address: string
+  isTogether: boolean
+}) {
+  const [idx, setIdx] = useState(0)
+  const total = images.length
+
+  function prev(e: React.MouseEvent) {
+    e.preventDefault()
+    setIdx((i) => (i - 1 + total) % total)
+  }
+  function next(e: React.MouseEvent) {
+    e.preventDefault()
+    setIdx((i) => (i + 1) % total)
+  }
+
+  if (total === 0) {
+    return (
+      <div className="h-44 w-full bg-muted flex items-center justify-center relative">
+        <span className="text-3xl">🏠</span>
+        {isTogether && <TogetherBadge />}
+      </div>
+    )
+  }
+
+  return (
+    <div className="relative h-44 w-full overflow-hidden bg-muted group">
+      {/* Main image */}
+      <img
+        src={images[idx]}
+        alt={`${address} photo ${idx + 1}`}
+        className="h-full w-full object-cover transition-opacity duration-200"
+      />
+
+      {/* Together badge */}
+      {isTogether && <TogetherBadge />}
+
+      {/* Prev / Next — only shown when multiple images */}
+      {total > 1 && (
+        <>
+          <button
+            onClick={prev}
+            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
+            aria-label="Previous photo"
+          >
+            <ChevronLeft className="size-3.5" />
+          </button>
+          <button
+            onClick={next}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm"
+            aria-label="Next photo"
+          >
+            <ChevronRight className="size-3.5" />
+          </button>
+
+          {/* Dot indicators */}
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1">
+            {images.slice(0, 8).map((_, i) => (
+              <button
+                key={i}
+                onClick={(e) => { e.preventDefault(); setIdx(i) }}
+                className={cn(
+                  'rounded-full transition-all',
+                  i === idx
+                    ? 'size-1.5 bg-white'
+                    : 'size-1 bg-white/50 hover:bg-white/80'
+                )}
+              />
+            ))}
+          </div>
+
+          {/* Photo count badge */}
+          <div className="absolute top-2 right-2 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+            {idx + 1} / {total}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+function TogetherBadge() {
+  return (
+    <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 rounded-full border border-[#8B6F8F]/30 bg-[#8B6F8F]/15 px-2.5 py-0.5 text-[10px] font-semibold text-[#8B6F8F] backdrop-blur-sm">
+      <span>👫</span> Together
+    </div>
+  )
+}
+
 export function ListingCard({ listing }: ListingCardProps) {
   const [expanded, setExpanded] = useState(false)
   const isTogether = !!listing.household_id
@@ -43,30 +133,11 @@ export function ListingCard({ listing }: ListingCardProps) {
           : 'border-border'
       )}
     >
-      {/* Photo */}
-      {listing.images && listing.images.length > 0 ? (
-        <div className="h-44 w-full overflow-hidden bg-muted relative">
-          <img
-            src={listing.images[0]}
-            alt={listing.address}
-            className="h-full w-full object-cover"
-          />
-          {isTogether && (
-            <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 rounded-full border border-[#8B6F8F]/30 bg-[#8B6F8F]/15 px-2.5 py-0.5 text-[10px] font-semibold text-[#8B6F8F] backdrop-blur-sm">
-              <span>👫</span> Together
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="h-44 w-full bg-muted flex items-center justify-center relative">
-          <span className="text-3xl">🏠</span>
-          {isTogether && (
-            <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 rounded-full border border-[#8B6F8F]/30 bg-[#8B6F8F]/15 px-2.5 py-0.5 text-[10px] font-semibold text-[#8B6F8F]">
-              <span>👫</span> Together
-            </div>
-          )}
-        </div>
-      )}
+      <PhotoCarousel
+        images={listing.images ?? []}
+        address={listing.address}
+        isTogether={isTogether}
+      />
 
       <div className="p-5 space-y-4">
         {/* Header row */}
@@ -110,7 +181,7 @@ export function ListingCard({ listing }: ListingCardProps) {
           </p>
         )}
 
-        {/* Compromise rating */}
+        {/* Compromise rating bar */}
         {isTogether && listing.compromise_rating != null && (
           <div className="flex items-center gap-2">
             <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
@@ -125,7 +196,7 @@ export function ListingCard({ listing }: ListingCardProps) {
           </div>
         )}
 
-        {/* Why this score */}
+        {/* Expand */}
         <div>
           <button
             onClick={(e) => { e.preventDefault(); setExpanded((prev) => !prev) }}
@@ -134,15 +205,11 @@ export function ListingCard({ listing }: ListingCardProps) {
             {expanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
             Why this score?
           </button>
-
           {expanded && (
-            <div
-              className={cn(
-                'mt-3 rounded-xl border border-dashed px-4 py-3',
-                'text-sm text-muted-foreground bg-muted/40',
-                isTogether ? 'border-[#8B6F8F]/20' : 'border-border'
-              )}
-            >
+            <div className={cn(
+              'mt-3 rounded-xl border border-dashed px-4 py-3 text-sm text-muted-foreground bg-muted/40',
+              isTogether ? 'border-[#8B6F8F]/20' : 'border-border'
+            )}>
               Open the full listing to see the score breakdown.
             </div>
           )}

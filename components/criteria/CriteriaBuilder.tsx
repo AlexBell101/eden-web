@@ -17,11 +17,12 @@ import {
 } from '@/components/ui/dialog'
 import { CriterionCard, type Criterion } from '@/components/criteria/CriterionCard'
 import { WeightVisualizer } from '@/components/criteria/WeightVisualizer'
-import { saveCriteria, deleteCriterion } from '@/app/actions/criteria'
+import { saveCriteria, deleteCriterion, saveVibeText } from '@/app/actions/criteria'
 import { cn } from '@/lib/utils'
 
 interface CriteriaBuilderProps {
   initialCriteria: Criterion[]
+  initialVibeText?: string
 }
 
 function computeNormalizedPercents(criteria: Criterion[]): Map<string, number> {
@@ -40,13 +41,19 @@ const EMPTY_DRAFT = {
   weight: 50,
 }
 
-export function CriteriaBuilder({ initialCriteria }: CriteriaBuilderProps) {
+export function CriteriaBuilder({ initialCriteria, initialVibeText = '' }: CriteriaBuilderProps) {
   const [criteria, setCriteria] = useState<Criterion[]>(initialCriteria)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [draft, setDraft] = useState(EMPTY_DRAFT)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [isPending, startTransition] = useTransition()
+
+  // Vibe text
+  const [vibeText, setVibeText] = useState(initialVibeText)
+  const [vibeSaved, setVibeSaved] = useState(false)
+  const [vibeError, setVibeError] = useState<string | null>(null)
+  const [isVibePending, startVibeTransition] = useTransition()
 
   const normalizedPercents = computeNormalizedPercents(criteria)
 
@@ -118,6 +125,19 @@ export function CriteriaBuilder({ initialCriteria }: CriteriaBuilderProps) {
     setSaveSuccess(false)
   }
 
+  function handleVibeSave() {
+    setVibeError(null)
+    setVibeSaved(false)
+    startVibeTransition(async () => {
+      try {
+        await saveVibeText(vibeText)
+        setVibeSaved(true)
+      } catch (err) {
+        setVibeError(err instanceof Error ? err.message : 'Failed to save')
+      }
+    })
+  }
+
   function handleSave() {
     setSaveError(null)
     setSaveSuccess(false)
@@ -136,6 +156,41 @@ export function CriteriaBuilder({ initialCriteria }: CriteriaBuilderProps) {
 
   return (
     <div className="space-y-6">
+
+      {/* ── Vibe section ──────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+        <div>
+          <h2 className="text-sm font-semibold text-foreground">Your vibe</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Describe your dream home in your own words. Claude reads this alongside your
+            criteria and uses it to personalise every recommendation — by name.
+          </p>
+        </div>
+
+        <textarea
+          value={vibeText}
+          onChange={(e) => { setVibeText(e.target.value); setVibeSaved(false) }}
+          placeholder={`e.g. "I love calm, tree-lined streets with good coffee nearby. Natural light is everything — I want to wake up to sun. A manicured garden or even just a window box would make me very happy. Noisy roads are a dealbreaker."`}
+          rows={4}
+          className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleVibeSave}
+            disabled={isVibePending}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-60"
+          >
+            {isVibePending ? 'Saving…' : 'Save vibe'}
+          </button>
+          {vibeSaved && <span className="text-xs text-[#7FA36C] font-medium">Saved ✓</span>}
+          {vibeError && <span className="text-xs text-destructive">{vibeError}</span>}
+          <span className="ml-auto text-xs text-muted-foreground">
+            Used by Claude when writing listing commentary
+          </span>
+        </div>
+      </div>
+
       {/* Weight visualizer */}
       {criteria.length > 0 && (
         <div className="rounded-2xl border border-border bg-card p-5">

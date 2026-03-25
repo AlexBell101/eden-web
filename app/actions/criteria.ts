@@ -29,40 +29,30 @@ export async function saveCriteria(criteria: CriterionInput[]) {
 
   const normalized = normalizeWeights(criteria)
 
-  // Separate existing rows (real UUID) from new ones (temp_ client id).
-  // They must be sent in two separate DB calls — mixing rows with and without
-  // an id field causes PostgREST to include id as a column for all rows,
-  // sending NULL for the new ones which Postgres rejects as a PK violation.
-  const isRealId = (id?: string) => !!id && !id.startsWith('temp_')
+  // DELETE + INSERT instead of upsert.
+  // Supabase RLS UPDATE policies can silently block upsert (no error returned,
+  // but 0 rows written). DELETE and INSERT policies are both confirmed working,
+  // so we wipe and rewrite the user's full criteria set on every save.
+  const { error: deleteError } = await supabase
+    .from('criteria')
+    .delete()
+    .eq('user_id', user.id)
 
-  const baseFields = (c: CriterionInput, i: number) => ({
-    user_id: user.id,
-    name: c.name,
-    description: c.description,
-    weight: c.weight,
-    scoring_prompt: c.scoring_prompt ?? null,
-    sort_order: c.sort_order ?? i,
-    is_default: c.is_default ?? false,
-  })
+  if (deleteError) throw new Error(deleteError.message)
 
-  const existingRows = normalized
-    .filter((c) => isRealId(c.id))
-    .map((c, i) => ({ id: c.id as string, ...baseFields(c, i) }))
+  if (normalized.length > 0) {
+    const rows = normalized.map((c, i) => ({
+      user_id: user.id,
+      name: c.name,
+      description: c.description,
+      weight: c.weight,
+      scoring_prompt: c.scoring_prompt ?? null,
+      sort_order: c.sort_order ?? i,
+      is_default: c.is_default ?? false,
+    }))
 
-  const newRows = normalized
-    .filter((c) => !isRealId(c.id))
-    .map((c, i) => baseFields(c, existingRows.length + i))
-
-  if (existingRows.length > 0) {
-    const { error } = await supabase
-      .from('criteria')
-      .upsert(existingRows, { onConflict: 'id' })
-    if (error) throw new Error(error.message)
-  }
-
-  if (newRows.length > 0) {
-    const { error } = await supabase.from('criteria').insert(newRows)
-    if (error) throw new Error(error.message)
+    const { error: insertError } = await supabase.from('criteria').insert(rows)
+    if (insertError) throw new Error(insertError.message)
   }
 
   revalidatePath('/criteria')

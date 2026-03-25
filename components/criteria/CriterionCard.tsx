@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { GripVertical, Pencil, Trash2, Lock, Check, X } from 'lucide-react'
+import { GripVertical, Pencil, Trash2, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { Textarea } from '@/components/ui/textarea'
@@ -91,7 +91,6 @@ export function CriterionCard({
                     onChange={(e) => setDraftName(e.target.value)}
                     className="h-7 text-sm font-semibold"
                     placeholder="Criterion name"
-                    disabled={criterion.is_default}
                   />
                 ) : (
                   <div className="flex items-center gap-2 flex-wrap">
@@ -139,28 +138,16 @@ export function CriterionCard({
                     >
                       <Pencil className="size-3.5" />
                     </Button>
-                    {criterion.is_default ? (
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        disabled
-                        title="Default criteria cannot be deleted"
-                        className="cursor-not-allowed"
-                      >
-                        <Lock className="size-3.5 text-muted-foreground/50" />
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => onDelete(criterion.id)}
-                        title="Delete criterion"
-                        disabled={disabled}
-                        className="hover:text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => onDelete(criterion.id)}
+                      title="Delete criterion"
+                      disabled={disabled}
+                      className="hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
                   </>
                 )}
               </div>
@@ -170,13 +157,14 @@ export function CriterionCard({
             {editing ? (
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-muted-foreground">
-                  Description
+                  What Claude looks for{' '}
+                  <span className="font-normal">— be specific, this drives the score</span>
                 </label>
                 <Textarea
                   value={draftDescription}
                   onChange={(e) => setDraftDescription(e.target.value)}
-                  className="text-sm min-h-[60px] resize-none"
-                  placeholder="Describe what this criterion evaluates..."
+                  className="text-sm min-h-[72px] resize-none"
+                  placeholder="e.g. Private outdoor space or dog park within 5 min walk. Pet-friendly building essential."
                 />
               </div>
             ) : (
@@ -185,22 +173,6 @@ export function CriterionCard({
                   {criterion.description}
                 </p>
               )
-            )}
-
-            {/* Scoring prompt (edit mode only) */}
-            {editing && (
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">
-                  Custom scoring hint{' '}
-                  <span className="font-normal">(optional, sent to Claude)</span>
-                </label>
-                <Textarea
-                  value={draftScoringPrompt}
-                  onChange={(e) => setDraftScoringPrompt(e.target.value)}
-                  className="text-sm min-h-[48px] resize-none"
-                  placeholder="e.g. Penalize if commute exceeds 45 minutes..."
-                />
-              </div>
             )}
 
             {/* Weight slider */}

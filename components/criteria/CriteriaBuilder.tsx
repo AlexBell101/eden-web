@@ -162,8 +162,9 @@ export function CriteriaBuilder({ initialCriteria, initialVibeText = '' }: Crite
         <div>
           <h2 className="text-sm font-semibold text-foreground">Your vibe</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Describe your dream home in your own words. Claude reads this alongside your
-            criteria and uses it to personalise every recommendation — by name.
+            Describe what you're looking for in your own words. Claude reads this when writing
+            commentary on each listing — it shapes the tone and what gets called out, but the
+            criteria cards below drive the actual scores.
           </p>
         </div>
 

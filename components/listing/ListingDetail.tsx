@@ -106,7 +106,11 @@ function scoreColor(score: number) {
 
 export function ListingDetail({ listing, score, criteria, householdScores = [], currentUserId }: ListingDetailProps) {
   const criteriaMap = Object.fromEntries(criteria.map((c) => [c.id, c.name]))
-  const criteriaEntries = score?.criteria_scores ? Object.entries(score.criteria_scores) : []
+  // Only show criteria that still exist — stale entries from deleted criteria
+  // would otherwise render as a raw UUID label next to the score.
+  const criteriaEntries = score?.criteria_scores
+    ? Object.entries(score.criteria_scores).filter(([cid]) => criteriaMap[cid])
+    : []
   const isTogetherListing = householdScores.length > 1
 
   // The household narrative (shared by all members — use any member's claude_reasoning)
@@ -202,7 +206,7 @@ export function ListingDetail({ listing, score, criteria, householdScores = [], 
                 {householdScores.map((m) => {
                   const isMe = m.user_id === currentUserId
                   const memberCriteriaEntries = m.criteria_scores
-                    ? Object.entries(m.criteria_scores)
+                    ? Object.entries(m.criteria_scores).filter(([cid]) => criteriaMap[cid])
                     : []
                   return (
                     <div key={m.user_id} className="px-5 py-4 space-y-3">

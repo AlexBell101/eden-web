@@ -269,6 +269,7 @@ export function SettingsForm({ profile }: SettingsFormProps) {
       <FieldGroup label="Search area">
         <p className="text-xs text-muted-foreground mb-2">
           Search for a neighborhood or city, then zoom to your ideal area and click "Use this area".
+          Or just type a location below.
         </p>
         <MapRegionSelector
           value={searchBounds}
@@ -277,6 +278,21 @@ export function SettingsForm({ profile }: SettingsFormProps) {
             setTargetCity(bounds.label)
           }}
         />
+        <div className="mt-3 space-y-1">
+          <label className="text-xs text-muted-foreground">
+            Or type a location directly (e.g. &quot;South Bay, CA&quot; or &quot;Brooklyn, NY&quot;)
+          </label>
+          <Input
+            type="text"
+            value={targetCity}
+            onChange={(e) => {
+              setTargetCity(e.target.value)
+              // Clear map bounds so the typed value takes precedence
+              if (e.target.value) setSearchBounds(null)
+            }}
+            placeholder="City, neighborhood, or ZIP"
+          />
+        </div>
       </FieldGroup>
 
       {/* Submit */}

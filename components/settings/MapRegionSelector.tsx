@@ -33,6 +33,9 @@ export function MapRegionSelector({ value, onChange }: MapRegionSelectorProps) {
   const [suggestions, setSuggestions] = useState<Array<{ id: string; place_name: string; center: [number, number] }>>([])
   const [isSearching, setIsSearching] = useState(false)
   const [captured, setCaptured] = useState(false)
+  // Full Mapbox place_name of the last selected suggestion (e.g. "South Bay, Los Angeles, California, United States")
+  // Saved as the bounds label so the scraper can clean it down to "South Bay, CA"
+  const fullPlaceName = useRef<string>('')
 
   const initialViewState = {
     longitude: value?.sw_lng ? (value.sw_lng + value.ne_lng) / 2 : -122.4194,
@@ -58,6 +61,7 @@ export function MapRegionSelector({ value, onChange }: MapRegionSelectorProps) {
 
   function selectSuggestion(suggestion: { id: string; place_name: string; center: [number, number] }) {
     setQuery(suggestion.place_name.split(',')[0])
+    fullPlaceName.current = suggestion.place_name  // keep full name for the bounds label
     setSuggestions([])
     mapRef.current?.flyTo({
       center: suggestion.center,
@@ -71,7 +75,9 @@ export function MapRegionSelector({ value, onChange }: MapRegionSelectorProps) {
     if (!map) return
     const bounds = map.getBounds()
     if (!bounds) return
-    const label = query || value?.label || 'Custom area'
+    // Prefer the full Mapbox place_name (includes state/country) so the scraper
+    // can normalise it. Fall back to short query then existing label.
+    const label = fullPlaceName.current || query || value?.label || 'Custom area'
     onChange({
       sw_lat: bounds.getSouth(),
       sw_lng: bounds.getWest(),

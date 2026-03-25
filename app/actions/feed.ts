@@ -117,13 +117,14 @@ export async function checkScraperHealth(): Promise<{
   busy: boolean
   lastRun: string | null
   scheduleHours: number | null
+  rapidApiKeySet: boolean | null
   error: string | null
 }> {
   const scraperUrl = process.env.SCRAPER_URL
   const scraperSecret = process.env.SCRAPER_SECRET
 
   if (!scraperUrl) {
-    return { urlConfigured: false, reachable: false, busy: false, lastRun: null, scheduleHours: null, error: 'SCRAPER_URL not set in environment' }
+    return { urlConfigured: false, reachable: false, busy: false, lastRun: null, scheduleHours: null, rapidApiKeySet: null, error: 'SCRAPER_URL not set in environment' }
   }
 
   try {
@@ -132,7 +133,7 @@ export async function checkScraperHealth(): Promise<{
       signal: AbortSignal.timeout(5000),
     })
     if (!res.ok) {
-      return { urlConfigured: true, reachable: false, busy: false, lastRun: null, scheduleHours: null, error: `HTTP ${res.status}` }
+      return { urlConfigured: true, reachable: false, busy: false, lastRun: null, scheduleHours: null, rapidApiKeySet: null, error: `HTTP ${res.status}` }
     }
     const data = await res.json()
     return {
@@ -141,6 +142,7 @@ export async function checkScraperHealth(): Promise<{
       busy: data.busy ?? false,
       lastRun: data.last_run ?? null,
       scheduleHours: data.schedule_hours ?? null,
+      rapidApiKeySet: data.rapidapi_key_set ?? null,
       error: null,
     }
   } catch (err) {
@@ -150,6 +152,7 @@ export async function checkScraperHealth(): Promise<{
       busy: false,
       lastRun: null,
       scheduleHours: null,
+      rapidApiKeySet: null,
       error: err instanceof Error ? err.message : 'Unreachable',
     }
   }

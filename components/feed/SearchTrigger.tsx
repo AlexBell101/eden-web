@@ -101,6 +101,7 @@ export function SearchTrigger({ lastScrapedAt, scrapeRequestedAt, scrapeStatus }
       const rows: DiagRow[] = [
         { label: 'SCRAPER_URL',    value: h.urlConfigured ? 'configured' : 'not set in Vercel env vars', ok: h.urlConfigured },
         { label: 'Reachable',      value: h.reachable ? 'yes' : (h.error ?? 'no'),                      ok: h.reachable },
+        { label: 'RAPIDAPI_KEY',   value: h.rapidApiKeySet == null ? 'unknown' : h.rapidApiKeySet ? 'set' : 'not set — add to Render env vars', ok: h.rapidApiKeySet ?? null },
         { label: 'Scraper busy',   value: h.reachable ? (h.busy ? 'yes — run in progress' : 'idle') : 'unknown', ok: h.reachable ? true : null },
         { label: 'Auto-schedule',  value: h.scheduleHours ? `every ${h.scheduleHours}h` : 'unknown',    ok: h.scheduleHours ? true : null },
         { label: 'Last server run',value: h.lastRun ? new Date(h.lastRun).toLocaleString() : 'never',   ok: null },
@@ -264,11 +265,16 @@ export function SearchTrigger({ lastScrapedAt, scrapeRequestedAt, scrapeStatus }
           {diagRows.length > 0 && (
             <div className="px-3 py-2 border-t border-border bg-muted/40">
               <p className="text-muted-foreground leading-relaxed">
-                {!diagRows.find(r => r.label === 'SCRAPER_URL')?.ok
-                  ? '→ Add SCRAPER_URL + SCRAPER_SECRET to Vercel env vars and redeploy.'
-                  : !diagRows.find(r => r.label === 'Reachable')?.ok
-                  ? '→ Scraper unreachable. Check Render dashboard — service may need redeploying as a Web Service.'
-                  : '→ Everything looks good. Search will update as scores come in.'}
+                {(() => {
+                  // Support both label sets: request-result rows and health rows
+                  const scraperUrlOk = diagRows.find(r => r.label === 'SCRAPER_URL' || r.label === 'SCRAPER_URL set')?.ok
+                  const reachableOk  = diagRows.find(r => r.label === 'Reachable' || r.label === 'Scraper called')?.ok
+                  const rapidApiOk   = diagRows.find(r => r.label === 'RAPIDAPI_KEY')?.ok
+                  if (scraperUrlOk === false) return '→ Add SCRAPER_URL + SCRAPER_SECRET to Vercel env vars and redeploy.'
+                  if (reachableOk === false)  return '→ Scraper unreachable. Check Render dashboard — service may need redeploying as a Web Service.'
+                  if (rapidApiOk === false)   return '→ Add RAPIDAPI_KEY to Render environment variables — required to fetch listings from Zillow.'
+                  return '→ Everything looks good. Search will update as scores come in.'
+                })()}
               </p>
             </div>
           )}

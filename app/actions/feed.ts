@@ -35,13 +35,36 @@ export async function restoreListing(listingId: string) {
   revalidatePath('/history')
 }
 
-export async function requestSearch() {
+export async function cancelSearch() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  // Always set the DB flag first — scraper will honour it even on next scheduled run
   await supabase
+    .from('profiles')
+    .update({
+      scrape_requested_at: null,
+      scrape_status: null,
+      scrape_progress: null,
+    })
+    .eq('id', user.id)
+
+  revalidatePath('/feed')
+}
+
+export async function requestSearch(): Promise<{
+  dbUpdated: boolean
+  scraperCalled: boolean
+  scraperResponse: string | null
+  scraperUrlConfigured: boolean
+  error: string | null
+}> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  // Always set the DB flag first
+  const { error: dbError } = await supabase
     .from('profiles')
     .update({
       scrape_requested_at: new Date().toISOString(),
@@ -50,19 +73,84 @@ export async function requestSearch() {
     })
     .eq('id', user.id)
 
-  // Best-effort: wake the scraper server immediately.
-  // Fails silently if SCRAPER_URL is not set or server is unreachable.
   const scraperUrl = process.env.SCRAPER_URL
   const scraperSecret = process.env.SCRAPER_SECRET
-  if (scraperUrl) {
-    try {
-      await fetch(`${scraperUrl}/run`, {
-        method: 'POST',
-        headers: scraperSecret ? { Authorization: `Bearer ${scraperSecret}` } : {},
-        signal: AbortSignal.timeout(5000),
-      })
-    } catch {
-      // Scraper unreachable — DB flag is set, will run on next scheduled run
+
+  if (!scraperUrl) {
+    return {
+      dbUpdated: !dbError,
+      scraperCalled: false,
+      scraperResponse: null,
+      scraperUrlConfigured: false,
+      error: dbError?.message ?? null,
+    }
+  }
+
+  try {
+    const res = await fetch(`${scraperUrl}/run`, {
+      method: 'POST',
+      headers: scraperSecret ? { Authorization: `Bearer ${scraperSecret}` } : {},
+      signal: AbortSignal.timeout(8000),
+    })
+    const body = await res.json().catch(() => null)
+    return {
+      dbUpdated: !dbError,
+      scraperCalled: true,
+      scraperResponse: res.ok ? (body?.status ?? 'ok') : `HTTP ${res.status}`,
+      scraperUrlConfigured: true,
+      error: res.ok ? null : `Scraper returned ${res.status}`,
+    }
+  } catch (err) {
+    return {
+      dbUpdated: !dbError,
+      scraperCalled: true,
+      scraperResponse: null,
+      scraperUrlConfigured: true,
+      error: err instanceof Error ? err.message : 'Failed to reach scraper',
+    }
+  }
+}
+
+export async function checkScraperHealth(): Promise<{
+  urlConfigured: boolean
+  reachable: boolean
+  busy: boolean
+  lastRun: string | null
+  scheduleHours: number | null
+  error: string | null
+}> {
+  const scraperUrl = process.env.SCRAPER_URL
+  const scraperSecret = process.env.SCRAPER_SECRET
+
+  if (!scraperUrl) {
+    return { urlConfigured: false, reachable: false, busy: false, lastRun: null, scheduleHours: null, error: 'SCRAPER_URL not set in environment' }
+  }
+
+  try {
+    const res = await fetch(`${scraperUrl}/health`, {
+      headers: scraperSecret ? { Authorization: `Bearer ${scraperSecret}` } : {},
+      signal: AbortSignal.timeout(5000),
+    })
+    if (!res.ok) {
+      return { urlConfigured: true, reachable: false, busy: false, lastRun: null, scheduleHours: null, error: `HTTP ${res.status}` }
+    }
+    const data = await res.json()
+    return {
+      urlConfigured: true,
+      reachable: true,
+      busy: data.busy ?? false,
+      lastRun: data.last_run ?? null,
+      scheduleHours: data.schedule_hours ?? null,
+      error: null,
+    }
+  } catch (err) {
+    return {
+      urlConfigured: true,
+      reachable: false,
+      busy: false,
+      lastRun: null,
+      scheduleHours: null,
+      error: err instanceof Error ? err.message : 'Unreachable',
     }
   }
 }

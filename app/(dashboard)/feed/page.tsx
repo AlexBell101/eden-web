@@ -83,7 +83,7 @@ export default async function FeedPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('score_threshold, scrape_requested_at, last_scraped_at')
+    .select('score_threshold, scrape_requested_at, last_scraped_at, scrape_status')
     .eq('id', user.id)
     .single()
 
@@ -107,6 +107,7 @@ export default async function FeedPage() {
           <SearchTrigger
             lastScrapedAt={profile?.last_scraped_at ?? null}
             scrapeRequestedAt={profile?.scrape_requested_at ?? null}
+            scrapeStatus={profile?.scrape_status ?? null}
           />
         </div>
       </div>

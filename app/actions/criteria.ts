@@ -29,26 +29,41 @@ export async function saveCriteria(criteria: CriterionInput[]) {
 
   const normalized = normalizeWeights(criteria)
 
-  // Only include id for real UUIDs — temp_* ids are client-side placeholders
-  // that Postgres would reject. Omitting id lets Supabase generate a new UUID.
+  // Separate existing rows (real UUID) from new ones (temp_ client id).
+  // They must be sent in two separate DB calls — mixing rows with and without
+  // an id field causes PostgREST to include id as a column for all rows,
+  // sending NULL for the new ones which Postgres rejects as a PK violation.
   const isRealId = (id?: string) => !!id && !id.startsWith('temp_')
 
-  const rows = normalized.map((c) => ({
-    ...(isRealId(c.id) ? { id: c.id } : {}),
+  const baseFields = (c: CriterionInput, i: number) => ({
     user_id: user.id,
     name: c.name,
     description: c.description,
     weight: c.weight,
     scoring_prompt: c.scoring_prompt ?? null,
-    sort_order: c.sort_order,
+    sort_order: c.sort_order ?? i,
     is_default: c.is_default ?? false,
-  }))
+  })
 
-  const { error } = await supabase
-    .from('criteria')
-    .upsert(rows, { onConflict: 'id' })
+  const existingRows = normalized
+    .filter((c) => isRealId(c.id))
+    .map((c, i) => ({ id: c.id as string, ...baseFields(c, i) }))
 
-  if (error) throw new Error(error.message)
+  const newRows = normalized
+    .filter((c) => !isRealId(c.id))
+    .map((c, i) => baseFields(c, existingRows.length + i))
+
+  if (existingRows.length > 0) {
+    const { error } = await supabase
+      .from('criteria')
+      .upsert(existingRows, { onConflict: 'id' })
+    if (error) throw new Error(error.message)
+  }
+
+  if (newRows.length > 0) {
+    const { error } = await supabase.from('criteria').insert(newRows)
+    if (error) throw new Error(error.message)
+  }
 
   revalidatePath('/criteria')
 }

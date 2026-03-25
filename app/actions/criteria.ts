@@ -98,32 +98,32 @@ export async function addCriterion(criterion: Omit<CriterionInput, 'id'>) {
 
 const DEFAULT_CRITERIA: Omit<CriterionInput, 'sort_order'>[] = [
   {
-    name: 'Walkability',
-    description: 'Proximity to shops, cafés, restaurants, and everyday errands on foot.',
+    name: 'Dog-friendly & outdoor access',
+    description: 'Private outdoor space (garden, yard, balcony) or a dog park nearby. Pet-friendly building policy is essential. Look for mentions of parks, trails, or green space within walking distance.',
     weight: 0.25,
     is_default: true,
   },
   {
-    name: 'Natural light',
-    description: 'Sunlight throughout the day — windows, orientation, open layout.',
+    name: 'SF access',
+    description: 'Reasonable commute to San Francisco without needing a car every day — BART, Caltrain, ferry, or a short drive. Does not need to be daily-commute close, but occasional trips should feel easy.',
+    weight: 0.20,
+    is_default: true,
+  },
+  {
+    name: 'Character & feel',
+    description: 'Modern interior finish OR interesting exterior (Victorian, craftsman, converted warehouse, interesting architecture). Should not feel like a generic apartment block. A blank canvas is fine if the bones are good.',
+    weight: 0.20,
+    is_default: true,
+  },
+  {
+    name: 'Walkable neighbourhood',
+    description: 'Restaurants, cafés, and everyday errands reachable on foot. Not a dealbreaker but a strong plus — neighbourhoods with street life, local spots, and energy score higher.',
     weight: 0.20,
     is_default: true,
   },
   {
     name: 'Value for money',
-    description: 'Rent (or price) relative to size, quality, and location.',
-    weight: 0.20,
-    is_default: true,
-  },
-  {
-    name: 'Neighborhood feel',
-    description: 'Character, safety, energy, and vibe of the surrounding area.',
-    weight: 0.20,
-    is_default: true,
-  },
-  {
-    name: 'Space & layout',
-    description: 'Room sizes, storage, flow between spaces, outdoor area.',
+    description: 'Rent relative to size, quality, and location. Penalise listings that are overpriced for what they offer or the area.',
     weight: 0.15,
     is_default: true,
   },

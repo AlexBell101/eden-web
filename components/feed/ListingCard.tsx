@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Bed, Bath, MapPin } from 'lucide-react'
+import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Bed, Bath, MapPin, X } from 'lucide-react'
 import { ScoreBadge } from '@/components/shared/ScoreBadge'
 import { cn } from '@/lib/utils'
 
@@ -23,6 +23,7 @@ export interface Listing {
 
 interface ListingCardProps {
   listing: Listing
+  onDismiss?: () => void
 }
 
 function formatRent(rent: number): string {
@@ -119,7 +120,7 @@ function TogetherBadge() {
   )
 }
 
-export function ListingCard({ listing }: ListingCardProps) {
+export function ListingCard({ listing, onDismiss }: ListingCardProps) {
   const [expanded, setExpanded] = useState(false)
   const isTogether = !!listing.household_id
 
@@ -127,7 +128,7 @@ export function ListingCard({ listing }: ListingCardProps) {
     <Link
       href={`/listing/${listing.id}`}
       className={cn(
-        'block rounded-2xl border bg-card shadow-sm overflow-hidden transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'group block rounded-2xl border bg-card shadow-sm overflow-hidden transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         isTogether
           ? 'border-[#8B6F8F]/30 hover:border-[#8B6F8F]/50'
           : 'border-border'
@@ -152,7 +153,18 @@ export function ListingCard({ listing }: ListingCardProps) {
             )}
           </div>
           <div className="shrink-0 mt-0.5 flex flex-col items-end gap-1">
-            <ScoreBadge score={listing.overall_score} className="shrink-0" />
+            <div className="flex items-center gap-1.5">
+              <ScoreBadge score={listing.overall_score} className="shrink-0" />
+              {onDismiss && (
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDismiss() }}
+                  className="rounded-md p-1 text-muted-foreground/40 opacity-0 group-hover:opacity-100 hover:text-muted-foreground hover:bg-muted transition-all"
+                  aria-label="Hide listing"
+                >
+                  <X className="size-3.5" />
+                </button>
+              )}
+            </div>
             {isTogether && listing.household_score != null && (
               <span className="text-[10px] text-[#8B6F8F] font-medium">
                 {listing.household_score.toFixed(1)} together

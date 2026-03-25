@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
-import { ListingCard, type Listing } from '@/components/feed/ListingCard'
-import { Search } from 'lucide-react'
+import { type Listing } from '@/components/feed/ListingCard'
+import { SearchTrigger } from '@/components/feed/SearchTrigger'
+import { FeedGrid } from '@/components/feed/FeedGrid'
 
 async function getListingsWithScores(userId: string, threshold: number): Promise<Listing[]> {
   const supabase = await createClient()
@@ -26,6 +27,7 @@ async function getListingsWithScores(userId: string, threshold: number): Promise
     `)
     .eq('user_id', userId)
     .gte('overall_score', threshold)
+    .eq('dismissed', false)
     .order('overall_score', { ascending: false })
 
   if (error || !data) return []
@@ -81,7 +83,7 @@ export default async function FeedPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('score_threshold')
+    .select('score_threshold, scrape_requested_at, last_scraped_at')
     .eq('id', user.id)
     .single()
 
@@ -91,74 +93,25 @@ export default async function FeedPage() {
     getHouseholdName(user.id),
   ])
 
-  const togetherListings = listings.filter((l) => l.household_id)
-  const soloListings = listings.filter((l) => !l.household_id)
-
   return (
     <div className="space-y-8">
       {/* Page header */}
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Your Feed</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Listings ranked by how well they match your criteria — scoring {threshold.toFixed(1)}+.
-        </p>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Your Feed</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Listings ranked by how well they match your criteria — scoring {threshold.toFixed(1)}+.
+            </p>
+          </div>
+          <SearchTrigger
+            lastScrapedAt={profile?.last_scraped_at ?? null}
+            scrapeRequestedAt={profile?.scrape_requested_at ?? null}
+          />
+        </div>
       </div>
 
-      {listings.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <>
-          {/* Together section */}
-          {togetherListings.length > 0 && householdName && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wide text-[#8B6F8F]">
-                  👫 Eden Together — {householdName}
-                </span>
-                <div className="flex-1 h-px bg-[#8B6F8F]/20" />
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {togetherListings.map((listing) => (
-                  <ListingCard key={`together-${listing.id}`} listing={listing} />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Solo section */}
-          {soloListings.length > 0 && (
-            <div className="space-y-4">
-              {togetherListings.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    🌿 Your Feed
-                  </span>
-                  <div className="flex-1 h-px bg-border" />
-                </div>
-              )}
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {soloListings.map((listing) => (
-                  <ListingCard key={listing.id} listing={listing} />
-                ))}
-              </div>
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  )
-}
-
-function EmptyState() {
-  return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30 py-20 text-center">
-      <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-muted">
-        <Search className="size-6 text-muted-foreground" />
-      </div>
-      <h2 className="text-base font-semibold text-foreground">Eden is searching...</h2>
-      <p className="mt-1.5 max-w-xs text-sm text-muted-foreground">
-        We&apos;re finding and scoring listings that match your criteria. Check back soon.
-      </p>
+      <FeedGrid listings={listings} householdName={householdName} />
     </div>
   )
 }

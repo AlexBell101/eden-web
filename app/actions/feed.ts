@@ -40,7 +40,8 @@ export async function requestSearch() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
-  const { error } = await supabase
+  // Always set the DB flag first — scraper will honour it even on next scheduled run
+  await supabase
     .from('profiles')
     .update({
       scrape_requested_at: new Date().toISOString(),
@@ -49,7 +50,21 @@ export async function requestSearch() {
     })
     .eq('id', user.id)
 
-  if (error) throw new Error(error.message)
+  // Best-effort: wake the scraper server immediately.
+  // Fails silently if SCRAPER_URL is not set or server is unreachable.
+  const scraperUrl = process.env.SCRAPER_URL
+  const scraperSecret = process.env.SCRAPER_SECRET
+  if (scraperUrl) {
+    try {
+      await fetch(`${scraperUrl}/run`, {
+        method: 'POST',
+        headers: scraperSecret ? { Authorization: `Bearer ${scraperSecret}` } : {},
+        signal: AbortSignal.timeout(5000),
+      })
+    } catch {
+      // Scraper unreachable — DB flag is set, will run on next scheduled run
+    }
+  }
 }
 
 export async function getSearchStatus(): Promise<{

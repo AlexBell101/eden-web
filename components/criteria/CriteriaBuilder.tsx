@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { Plus, Save, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -47,7 +47,20 @@ export function CriteriaBuilder({ initialCriteria, initialVibeText = '' }: Crite
   const [draft, setDraft] = useState(EMPTY_DRAFT)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [hasUnsaved, setHasUnsaved] = useState(false)
   const [isPending, startTransition] = useTransition()
+
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      if (hasUnsaved) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [hasUnsaved])
 
   // Vibe text
   const [vibeText, setVibeText] = useState(initialVibeText)
@@ -68,7 +81,6 @@ export function CriteriaBuilder({ initialCriteria, initialVibeText = '' }: Crite
       const othersTotal = others.reduce((sum, c) => sum + c.weight, 0)
       return prev.map((c) => {
         if (c.id === id) return { ...c, weight: newPercent / 100 }
-        // Scale others proportionally to fill remaining %
         const scaled = othersTotal > 0
           ? (c.weight / othersTotal) * (remaining / 100)
           : remaining / 100 / others.length
@@ -76,6 +88,7 @@ export function CriteriaBuilder({ initialCriteria, initialVibeText = '' }: Crite
       })
     })
     setSaveSuccess(false)
+    setHasUnsaved(true)
   }
 
   function handleCriterionChange(updated: Criterion) {
@@ -83,11 +96,13 @@ export function CriteriaBuilder({ initialCriteria, initialVibeText = '' }: Crite
       prev.map((c) => (c.id === updated.id ? updated : c))
     )
     setSaveSuccess(false)
+    setHasUnsaved(true)
   }
 
   function handleDelete(id: string) {
     setCriteria((prev) => prev.filter((c) => c.id !== id))
     setSaveSuccess(false)
+    setHasUnsaved(true)
     // Optimistically remove; server action will confirm on next save
     startTransition(async () => {
       try {
@@ -109,7 +124,6 @@ export function CriteriaBuilder({ initialCriteria, initialVibeText = '' }: Crite
     if (!draft.name.trim()) return
 
     const newCriterion: Criterion = {
-      // Temporary client-side ID until saved; will be replaced by Supabase UUID
       id: `temp_${Date.now()}`,
       name: draft.name.trim(),
       description: draft.description.trim(),
@@ -123,6 +137,7 @@ export function CriteriaBuilder({ initialCriteria, initialVibeText = '' }: Crite
     setDraft(EMPTY_DRAFT)
     setDialogOpen(false)
     setSaveSuccess(false)
+    setHasUnsaved(true)
   }
 
   function handleVibeSave() {
@@ -148,6 +163,7 @@ export function CriteriaBuilder({ initialCriteria, initialVibeText = '' }: Crite
           criteria.map((c, i) => ({ ...c, sort_order: i }))
         )
         setSaveSuccess(true)
+        setHasUnsaved(false)
       } catch (err) {
         setSaveError(err instanceof Error ? err.message : 'Failed to save criteria')
       }
@@ -242,6 +258,23 @@ export function CriteriaBuilder({ initialCriteria, initialVibeText = '' }: Crite
         )}
       </div>
 
+      {/* Unsaved changes banner */}
+      {hasUnsaved && (
+        <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 dark:border-amber-900/50 dark:bg-amber-900/20">
+          <AlertTriangle className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <p className="text-sm text-amber-800 dark:text-amber-300 flex-1">
+            You have unsaved changes — click <strong>Save Changes</strong> or they&apos;ll be lost on refresh.
+          </p>
+          <button
+            onClick={handleSave}
+            disabled={isPending}
+            className="shrink-0 rounded-lg bg-amber-600 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-700 transition-colors disabled:opacity-60"
+          >
+            {isPending ? 'Saving…' : 'Save now'}
+          </button>
+        </div>
+      )}
+
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card px-5 py-3.5">
         {/* Left: criterion count */}
@@ -251,7 +284,7 @@ export function CriteriaBuilder({ initialCriteria, initialVibeText = '' }: Crite
           </span>
           {saveSuccess && (
             <Badge variant="success" className="text-[10px] h-5">
-              Saved
+              Saved ✓
             </Badge>
           )}
           {saveError && (
